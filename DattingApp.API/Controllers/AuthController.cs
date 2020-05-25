@@ -2,6 +2,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using AutoMapper;
 using DattingApp.API.Data;
 using DattingApp.API.Dtos;
 using DattingApp.API.Models;
@@ -17,9 +18,11 @@ namespace DattingApp.API.Controllers
     {
         private readonly IAuthRepository _repo;
         private readonly IConfiguration _config;
+        private readonly IMapper _mapper;
 
-        public AuthController(IAuthRepository repo, IConfiguration config)
+        public AuthController(IAuthRepository repo, IConfiguration config, IMapper mapper)
         {
+            _mapper = mapper;
             _repo = repo;
             _config = config;
         }
@@ -30,16 +33,16 @@ namespace DattingApp.API.Controllers
         {
             userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
 
-            if(await _repo.UserExists(userForRegisterDto.Username))
+            if (await _repo.UserExists(userForRegisterDto.Username))
                 return BadRequest("User already exists");
-            
+
             var userToCreate = new User
             {
                 Username = userForRegisterDto.Username
             };
 
             var createdUser = await _repo.Register(userToCreate, userForRegisterDto.Password);
-            
+
             return StatusCode(201);
         }
 
@@ -48,7 +51,7 @@ namespace DattingApp.API.Controllers
         {
             var userFromRepo = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
 
-            if(userFromRepo == null)
+            if (userFromRepo == null)
                 return Unauthorized();
 
             var claims = new[]
@@ -71,10 +74,12 @@ namespace DattingApp.API.Controllers
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var token = tokenHandler.CreateJwtSecurityToken(tokenDescriptor);
+            var user = _mapper.Map<UserForListDto>(userFromRepo);
 
             return Ok(new
             {
-                token = tokenHandler.WriteToken(token)
+                token = tokenHandler.WriteToken(token),
+                user
             });
         }
     }

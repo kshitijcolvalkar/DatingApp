@@ -3,3 +3,10 @@
 {
     cursor: pointer;
 }
+
+img
+{
+    max-width: 50px;
+    border: 2px solid white;
+    display: inline;
+}
