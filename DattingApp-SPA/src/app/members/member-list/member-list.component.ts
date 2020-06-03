@@ -3,6 +3,7 @@ import { PaginatedResult, Pagination } from 'src/app/_models/pagination';
 import { User } from '../../_models/user';
 import { AlertifyService } from '../../_services/alertify.service';
 import { UserService } from '../../_services/user.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-member-list',
@@ -16,26 +17,23 @@ export class MemberListComponent implements OnInit {
   user: User = JSON.parse(localStorage.getItem('user'));
   genderLists = [{value: 'male', display: 'Males'}, {value: 'female', display: 'Females'}];
   userParams: any = {};
-  constructor(private userService: UserService, private alertify: AlertifyService) { }
+  constructor(private userService: UserService, private alertify: AlertifyService, private route: ActivatedRoute) { }
   ngOnInit() {
-    this.pagination = {
-      pageNumber: 1,
-      pageSize: 5,
-      totalItems: 0,
-      totalPages: 0
-    };
+    this.route.data.subscribe((data) => {
+      this.users = data['users'].result;
+      this.pagination = data['users'].pagination;
+    });
 
     this.userParams.gender = this.user.gender === 'male' ? 'female' : 'male';
     this.userParams.minAge = 18;
     this.userParams.maxAge = 99;
     this.userParams.orderBy = 'lastActive';
-
-    this.getUsers();
   }
 
   getUsers()
   {
-    this.userService.getUsers(this.pagination.pageNumber, this.pagination.pageSize, this.userParams).subscribe((users: PaginatedResult<User[]>) => {
+    this.userService.getUsers(this.pagination.pageNumber, this.pagination.pageSize, this.userParams)
+    .subscribe((users: PaginatedResult<User[]>) => {
       this.users = users.result;
       this.pagination = users.pagination;
     }, error => {

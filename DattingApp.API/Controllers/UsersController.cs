@@ -67,5 +67,33 @@ namespace DattingApp.API.Controllers
             throw new Exception($"Failed to update user {id}");
 
         }
+
+        [HttpPost("{id}/like/{recepientid}")]
+        public async Task<IActionResult> AddLike(int id, int recepientid)
+        {
+            if(id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+            
+            var liked = await _repo.GetLike(id, recepientid);
+
+            if(liked != null)
+                return BadRequest($"You already liked this user {liked.Likee.KnownAs}");
+            
+            if(await _repo.GetUser(recepientid) == null)
+                return NotFound();
+            
+            var like = new Like{
+                LikerId = id,
+                LikeeId = recepientid
+            };
+
+            _repo.Add<Like>(like);
+
+            if(await _repo.SaveAll())
+                return Ok();
+            
+            return BadRequest("Error while liking the user");
+            
+        }
     }
 }
