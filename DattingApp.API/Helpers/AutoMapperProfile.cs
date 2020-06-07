@@ -24,6 +24,12 @@ namespace DattingApp.API.Helpers
             CreateMap<PhotoForUserDto, Photo>();
             CreateMap<Photo, PhotoForReturnDto>();
             CreateMap<UserForRegisterDto, User>();
+            CreateMap<Message, MessageForReturnDto>()
+                .ForMember(dest => dest.SenderPhotoUrl, opt =>
+                    opt.MapFrom(src => src.Sender.Photos.FirstOrDefault(p => p.IsMain).Url))
+                .ForMember(dest => dest.RecepientPhotoUrl, opt =>
+                    opt.MapFrom(src => src.Recepient.Photos.FirstOrDefault(p => p.IsMain).Url));
+            CreateMap<MessageForCreationDto, Message>().ReverseMap();
         }
     }
 }
