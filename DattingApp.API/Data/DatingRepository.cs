@@ -28,7 +28,7 @@ namespace DattingApp.API.Data
 
         public async Task<Like> GetLike(int userId, int recepientId)
         {
-            return await _context.Likes.Include(u => u.Likee).FirstOrDefaultAsync(u => u.LikerId == userId && u.LikeeId == recepientId);
+            return await _context.Likes.FirstOrDefaultAsync(u => u.LikerId == userId && u.LikeeId == recepientId);
         }
 
         public async Task<Photo> GetMainPhotoForUser(int userId)
@@ -45,13 +45,13 @@ namespace DattingApp.API.Data
 
         public async Task<User> GetUser(int userId)
         {
-            var user = await _context.Users.Include(p => p.Photos).FirstOrDefaultAsync(x => x.Id == userId);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
             return user;
         }
 
         public async Task<PagedList<User>> GetUsers(UserParams userParams)
         {
-            var users = _context.Users.Include(p => p.Photos).OrderByDescending(u => u.LastActive).AsQueryable();
+            var users = _context.Users.OrderByDescending(u => u.LastActive).AsQueryable();
             users = users.Where(u => u.Id != userParams.UserId);
             users = users.Where(u => u.Gender == userParams.Gender);
 
@@ -93,7 +93,7 @@ namespace DattingApp.API.Data
 
         private async Task<IEnumerable<int>> GetUserLikes(int id, bool likers)
         {
-            var user = await _context.Users.Include(u => u.Likers).Include(u => u.Likees).FirstOrDefaultAsync(u => u.Id == id);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
             if(likers)
             {
@@ -117,10 +117,7 @@ namespace DattingApp.API.Data
 
         public async Task<PagedList<Message>> GetMessagesForUser(MessageParams messageParams)
         {
-            var messages = _context.Messages
-                            .Include(x => x.Sender).ThenInclude(p => p.Photos)
-                            .Include(x => x.Recepient).ThenInclude(p => p.Photos)
-                            .AsQueryable();
+            var messages = _context.Messages.AsQueryable();
             
             switch(messageParams.MessageContainer)
             {
@@ -143,8 +140,6 @@ namespace DattingApp.API.Data
         public async Task<IEnumerable<Message>> GetMessageThread(int userId, int recepientId)
         {
             var messages = await _context.Messages
-                            .Include(x => x.Sender).ThenInclude(p => p.Photos)
-                            .Include(x => x.Recepient).ThenInclude(p => p.Photos)
                             .Where(u => (u.RecepientId  == userId && !u.RecepientDeleted && u.SenderId == recepientId) ||
                             (u.RecepientId == recepientId && u.SenderId == userId && !u.SenderDeleted))
                             .OrderByDescending(u => u.MessageSent)
